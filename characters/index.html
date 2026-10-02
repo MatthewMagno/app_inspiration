@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Character &amp; Item Inspiration</title>
+<style>
+:root{--bg:#16130f;--panel:#1f1b16;--line:#2f2a22;--fg:#f1e9dc;--mute:#9a907f;--acc:#e8a15b;--cell:#2a251e;--size:120px;--rad:12px;--ibg:transparent}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+header{position:sticky;top:0;z-index:20;background:rgba(22,19,15,.95);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding:10px 16px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.row+.row{margin-top:8px}
+h1{font-size:15px;margin:0 12px 0 0}
+button,select,input{font:inherit;color:var(--fg);background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:5px 10px}
+button{cursor:pointer}
+button.on{background:var(--acc);color:#1a1208;border-color:var(--acc)}
+input[type=search]{min-width:200px}
+input[type=range]{padding:0;width:110px;accent-color:var(--acc)}
+label{color:var(--mute);display:flex;align-items:center;gap:6px}
+.count{color:var(--mute);margin-left:auto}
+.note{color:var(--mute);font-size:12px}
+.note a{color:var(--acc)}
+.seg{display:flex}.seg button{border-radius:0;margin-left:-1px}.seg button:first-child{border-radius:8px 0 0 8px;margin:0}.seg button:last-child{border-radius:0 8px 8px 0}
+.chips{max-height:84px;overflow:auto}
+.chips button{font-size:12px;padding:3px 9px;border-radius:99px}
+.chips .grp{color:var(--mute);font-size:11px;text-transform:uppercase;letter-spacing:.06em;margin:0 2px 0 6px}
+main{padding:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(var(--size),1fr));gap:12px}
+.cell{position:relative;background:var(--cell);border-radius:12px;padding:10px;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;border:1px solid transparent;min-width:0}
+.cell:hover{border-color:var(--acc)}
+.cell img{width:100%;aspect-ratio:1;object-fit:contain;background:var(--ibg);border-radius:var(--rad);display:block}
+img.px{image-rendering:pixelated}
+.cell .nm{font-size:11px;color:var(--mute);text-align:center;width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cell .fav{position:absolute;top:6px;right:6px;border:0;background:rgba(0,0,0,.5);border-radius:50%;width:26px;height:26px;padding:0;font-size:14px;opacity:0;line-height:26px;text-align:center}
+.cell:hover .fav,.cell .fav.on{opacity:1}
+.cell .fav.on{background:var(--acc);color:#1a1208}
+.hide-names .nm{display:none}
+#more{display:block;margin:20px auto;padding:10px 24px}
+#lb{position:fixed;inset:0;background:rgba(0,0,0,.88);display:none;align-items:center;justify-content:center;z-index:50;flex-direction:column;gap:12px;padding:16px}
+#lb.open{display:flex}
+#lb img.big{max-width:min(80vw,560px);max-height:55vh;border-radius:var(--rad);background:var(--ibg)}
+#lb .meta{color:var(--mute);text-align:center;max-width:640px}
+#lb a{color:var(--acc)}
+.tiny{display:flex;gap:10px;align-items:flex-end;justify-content:center}
+.empty{color:var(--mute);padding:40px;text-align:center}
+</style>
+</head>
+<body>
+<header>
+  <div class="row">
+    <a href="../" style="color:var(--mute);text-decoration:none">← Home</a>
+    <h1>Characters &amp; Items</h1>
+    <div class="seg" id="kind"><button data-k="" class="on">All</button><button data-k="character">Characters</button><button data-k="item">Items</button></div>
+    <select id="style" title="Art style"></select>
+    <select id="cat" title="Category" style="display:none"></select>
+    <input type="search" id="q" placeholder="Search name…">
+    <button id="shuffle" title="Reshuffle">Shuffle</button>
+    <span class="count" id="count"></span>
+  </div>
+  <div class="row chips" id="sources"></div>
+  <div class="row">
+    <label>Size <input type="range" id="size" min="56" max="280" value="120"></label>
+    <label>Background <select id="bg"><option value="">None</option><option value="#ffffff">White</option><option value="#0e0c09">Black</option><option value="#e8a15b">Orange</option><option value="#5b8fe8">Blue</option><option value="#7ac28a">Green</option><option value="#d46a8b">Pink</option><option value="#3a3366">Purple</option></select></label>
+    <label>Shape <select id="shape"><option value="12px">Soft</option><option value="0">Square</option><option value="22%">App icon</option><option value="50%">Circle</option></select></label>
+    <label><input type="checkbox" id="names" checked> Names</label>
+    <button id="picks">♥ Picks (<span id="pc">0</span>)</button>
+    <button id="export">Copy picks</button>
+    <span class="note" id="srcnote"></span>
+  </div>
+</header>
+<main><div id="grid" class="grid"></div><button id="more" style="display:none">Load more</button></main>
+<div id="lb"><img class="big" id="lbimg"><div class="tiny" id="tiny"></div><div class="meta" id="lbmeta"></div></div>
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const PAGE=240;
+let sources=[],kind='',style='',srcId='',cat='',list=[],shown=0,showPicks=false;
+let picks=new Map();try{picks=new Map(JSON.parse(localStorage.getItem('charPicks')||'[]'))}catch(e){}
+const savePicks=()=>{try{localStorage.setItem('charPicks',JSON.stringify([...picks]))}catch(e){}$('#pc').textContent=picks.size};
+const KL={character:'Characters',item:'Items',both:'Characters + items'};
+
+fetch('data/gallery.json').then(r=>r.json()).then(d=>{
+  sources=d;
+  const styles=[...new Set(d.map(s=>s.style))].sort();
+  $('#style').innerHTML='<option value="">All styles</option>'+styles.map(s=>`<option>${s}</option>`).join('');
+  buildChips();refresh();
+});
+
+const visibleSources=()=>sources.filter(s=>(!kind||s.kind===kind||s.kind==='both')&&(!style||s.style===style));
+function buildChips(){
+  const bar=$('#sources');bar.innerHTML='';
+  const vs=visibleSources();
+  if(srcId&&!vs.find(s=>s.id===srcId))srcId='';
+  const mk=(id,t)=>{const b=document.createElement('button');b.dataset.id=id;b.textContent=t;b.className=id===srcId&&!showPicks?'on':'';bar.append(b)};
+  mk('',`Mix everything (${vs.length} packs)`);
+  ['character','both','item'].forEach(k=>{
+    const g=vs.filter(s=>s.kind===k);if(!g.length)return;
+    const l=document.createElement('span');l.className='grp';l.textContent=KL[k];bar.append(l);
+    g.forEach(s=>mk(s.id,`${s.label} · ${s.items.length.toLocaleString()}`));
+  });
+}
+$('#sources').onclick=e=>{if(e.target.dataset.id!==undefined){showPicks=false;srcId=e.target.dataset.id;cat='';buildChips();refresh()}};
+$('#kind').onclick=e=>{if(e.target.dataset.k===undefined)return;kind=e.target.dataset.k;cat='';
+  document.querySelectorAll('#kind button').forEach(b=>b.classList.toggle('on',b===e.target));showPicks=false;buildChips();refresh()};
+$('#style').onchange=e=>{style=e.target.value;cat='';showPicks=false;buildChips();refresh()};
+$('#cat').onchange=e=>{cat=e.target.value;refresh()};
+
+function collect(){
+  if(showPicks)return [...picks.values()];
+  let out=[];
+  const q=$('#q').value.trim().toLowerCase();
+  const one=srcId&&sources.find(s=>s.id===srcId);
+  (one?[one]:visibleSources()).forEach(s=>{
+    for(const it of s.items){
+      const k=it[3]||(s.kind==='both'?'':s.kind);
+      if(kind&&k&&(k==='c'?'character':k==='i'?'item':k)!==kind)continue;
+      if(cat&&it[2]!==cat)continue;
+      if(q&&!it[0].toLowerCase().includes(q)&&!s.label.toLowerCase().includes(q)&&!(it[2]||'').toLowerCase().includes(q))continue;
+      out.push({n:it[0],u:s.base+it[1],c:it[2]||'',s:s.label,l:s.url,lic:s.license,px:s.style==='pixel'});
+    }
+  });
+  return out;
+}
+function refresh(reshuffle=true){
+  const one=srcId&&sources.find(s=>s.id===srcId);
+  // category dropdown for a single pack
+  const cs=one?[...new Set(one.items.map(i=>i[2]).filter(Boolean))].sort():[];
+  const cd=$('#cat');cd.style.display=cs.length>1&&!showPicks?'':'none';
+  if(cs.length>1)cd.innerHTML='<option value="">All categories</option>'+cs.map(c=>`<option${c===cat?' selected':''}>${esc(c)}</option>`).join('');
+  $('#picks').classList.toggle('on',showPicks);
+  $('#srcnote').innerHTML=showPicks?'Your favourites':one?`<a target="_blank" href="${one.url}">${esc(one.url.replace('https://github.com/',''))}</a> · ${esc(one.note)} · ${esc(one.license)}`:'Mixed from every pack below — shuffled (hit Shuffle for more)';
+  let items=collect();
+  if(!showPicks) for(let i=items.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[items[i],items[j]]=[items[j],items[i]]}
+  list=items;shown=0;$('#grid').innerHTML='';
+  $('#count').textContent=items.length.toLocaleString()+' images';
+  if(!items.length)$('#grid').innerHTML='<div class="empty">Nothing here.</div>';
+  more();
+}
+function more(){
+  const g=$('#grid'),frag=document.createDocumentFragment();
+  list.slice(shown,shown+PAGE).forEach(i=>{
+    const c=document.createElement('div');c.className='cell';
+    c.innerHTML=`<button class="fav${picks.has(i.u)?' on':''}" title="Pick">♥</button><img${i.px?' class="px"':''} loading="lazy" decoding="async" referrerpolicy="no-referrer" alt="" src="${esc(i.u)}"><div class="nm"></div>`;
+    c.querySelector('.nm').textContent=i.n;c.title=`${i.n} — ${i.s}`;
+    c.querySelector('img').onerror=()=>c.remove();
+    c.querySelector('.fav').onclick=e=>{e.stopPropagation();
+      if(picks.has(i.u)){picks.delete(i.u);e.target.classList.remove('on');if(showPicks)c.remove()}else{picks.set(i.u,i);e.target.classList.add('on')}savePicks()};
+    c.onclick=()=>openLb(i);frag.append(c)});
+  g.append(frag);shown+=PAGE;
+  $('#more').style.display=shown<list.length?'block':'none';
+}
+function openLb(i){
+  $('#lbimg').src=i.u;$('#lbimg').className='big'+(i.px?' px':'');
+  $('#tiny').innerHTML=[96,64,40,24].map(w=>`<img class="${i.px?'px':''}" style="width:${w}px;height:${w}px;object-fit:contain;border-radius:var(--rad);background:var(--ibg)" src="${esc(i.u)}">`).join('');
+  $('#lbmeta').innerHTML=`<b style="color:var(--fg)">${esc(i.n)}</b> · ${esc(i.s)}${i.c?' · '+esc(i.c):''}<br>${esc(i.lic)}<br><a target="_blank" href="${esc(i.l)}">Source repo ↗</a> · <a target="_blank" href="${esc(i.u)}">Image ↗</a> · click anywhere to close`;
+  $('#lb').classList.add('open');
+}
+$('#lb').onclick=e=>{if(e.target.tagName!=='A')$('#lb').classList.remove('open')};
+addEventListener('keydown',e=>{if(e.key==='Escape')$('#lb').classList.remove('open')});
+
+const root=document.documentElement;
+$('#size').oninput=e=>root.style.setProperty('--size',e.target.value+'px');
+$('#bg').onchange=e=>root.style.setProperty('--ibg',e.target.value||'transparent');
+$('#shape').onchange=e=>root.style.setProperty('--rad',e.target.value);
+$('#names').onchange=e=>$('#grid').classList.toggle('hide-names',!e.target.checked);
+let t;$('#q').oninput=()=>{clearTimeout(t);t=setTimeout(refresh,200)};
+$('#shuffle').onclick=()=>{showPicks=false;refresh()};
+$('#more').onclick=more;
+$('#picks').onclick=()=>{showPicks=!showPicks;buildChips();refresh()};
+$('#export').onclick=()=>{const txt=[...picks.values()].map(i=>`${i.n}\t${i.s}\t${i.u}`).join('\n');
+  navigator.clipboard.writeText(txt).then(()=>alert('Copied '+picks.size+' picks to clipboard'),()=>prompt('Copy:',txt))};
+new IntersectionObserver(es=>{if(es[0].isIntersecting&&shown<list.length)more()},{rootMargin:'800px'}).observe($('#more'));
+savePicks();
+</script>
+</body>
+</html>
