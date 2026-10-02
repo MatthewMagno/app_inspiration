@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>App Inspiration</title>
+<style>
+:root{--bg:#16130f;--panel:#1f1b16;--line:#2f2a22;--fg:#f1e9dc;--mute:#9a907f;--acc:#e8a15b}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.wrap{max-width:960px;margin:0 auto;padding:64px 20px}
+h1{font-size:34px;margin:0 0 8px;letter-spacing:-.02em}
+.sub{color:var(--mute);margin:0 0 40px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+.card{display:block;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px;text-decoration:none;color:inherit;transition:border-color .15s,transform .15s}
+a.card:hover{border-color:var(--acc);transform:translateY(-2px)}
+.card h2{margin:0 0 6px;font-size:19px}
+.card p{margin:0;color:var(--mute);font-size:14px}
+.card .tag{display:inline-block;margin-top:14px;font-size:12px;color:var(--acc)}
+.card.soon{opacity:.5;border-style:dashed}
+.card.soon .tag{color:var(--mute)}
+.preview{display:flex;gap:6px;margin-bottom:16px}
+.preview span{width:38px;height:38px;border-radius:9px;background:var(--c)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>App Inspiration</h1>
+  <p class="sub">A place to browse design references for apps. Pick a section.</p>
+  <div class="cards">
+    <a class="card" href="icons/">
+      <div class="preview">
+        <span style="--c:#e8a15b"></span><span style="--c:#5b8fe8"></span><span style="--c:#7ac28a"></span><span style="--c:#d46a8b"></span>
+      </div>
+      <h2>App icons</h2>
+      <p>About 14,700 icons: community packs from GitHub repos plus real App Store icons. Filter, compare sizes, and pick favorites.</p>
+      <span class="tag">Open →</span>
+    </a>
+    <div class="card soon"><h2>Screenshots</h2><p>App Store screenshot layouts and caption styles.</p><span class="tag">Coming soon</span></div>
+    <div class="card soon"><h2>Onboarding</h2><p>First-run flows and welcome screens.</p><span class="tag">Coming soon</span></div>
+    <div class="card soon"><h2>Paywalls</h2><p>Subscription and upgrade screen patterns.</p><span class="tag">Coming soon</span></div>
+  </div>
+</div>
+</body>
+</html>
